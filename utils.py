@@ -47,18 +47,21 @@ def get_response(agent, input_text: str):
     """
     prompt = (
         """
-            For the following query, if it requires drawing a table, reply as follows:
+            For the following query, if it requires drawing a table, it should reply as follows:
             {"table": {"columns": ["column1", "column2", ...], "data": [[value1, value2, ...], [value1, value2, ...], ...]}}
 
-            If the query requires creating a bar chart, reply as follows:
+            If the query requires creating a bar chart, it should reply as follows:
             {"bar": {"columns": ["A", "B", "C", ...], "data": [25, 24, 10, ...]}}
 
-            If the query requires creating a line chart, reply as follows:
+            If the query requires creating a line chart, it should reply as follows:
             {"line": {"columns": ["A", "B", "C", ...], "data": [25, 24, 10, ...]}}
 
-            There can only be two types of chart, "bar" and "line".
+            If the query requires creating a pie chart, it should reply as follows:
+            {"pie": {"columns": ["A", "B", "C", ...], "data": [25, 24, 10, ...]}}
 
-            If it is just asking a question that requires neither, reply as follows:
+            There can only be three types of chart, "bar", "pie" and "line".
+
+            If it is just asking a question that requires neither, it should reply as follows:
             {"answer": "answer"}
             Example:
             {"answer": "The title with the highest rating is 'Gilead'"}

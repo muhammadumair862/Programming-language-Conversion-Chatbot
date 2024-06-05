@@ -30,10 +30,21 @@ def write_response(response_dict: dict):
     # Check if the response is an answer.
     if "answer" in response_dict:
         st.write(response_dict["answer"])
+    
+    # Check if the response is a bar chart.
+    if "pie" in response_dict:
+        data = response_dict["bar"]
+
+        df = pd.DataFrame(data['data'], columns=data['columns'])
+        df.set_index(df.columns[0], inplace=True)
+        # df.set_index("columns", inplace=True)
+        st.pie_chart(df)
+        
 
     # Check if the response is a bar chart.
     if "bar" in response_dict:
         data = response_dict["bar"]
+        print(data)
 
         df = pd.DataFrame(data['data'], columns=data['columns'])
         df.set_index(df.columns[0], inplace=True)
@@ -67,6 +78,7 @@ if st.button("Submit Query", type="primary"):
 
     # Query the agent.
     response = get_response(agent=agent, input_text=query)
+    print(response)
 
     # Decode the response.
     decoded_response = decode_response(response)
