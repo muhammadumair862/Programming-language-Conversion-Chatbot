@@ -1,3 +1,4 @@
+import openai
 from utils import create_agent, get_response
 import streamlit as st
 import pandas as pd
@@ -107,6 +108,55 @@ st.markdown(html_string, unsafe_allow_html=True)
 def is_valid_path(path):
     return os.path.exists(path)
 
+def greeting_response(question: str):
+    # System message to set up the context
+    system_message = {"role": "system", 
+                      "content": f"""Instructions: 
+                                    - You are AI Chatbot. Your goal is to response for basic greetings and simple daily conversation queries.
+                                    Example:
+                                    Question 1: Hi
+                                    Response 1: Hello, How can I help you today?
+
+                                    Question 2: "Good morning. How are you today?"
+                                    Response 2: "Good morning. I am doing well, thank you. How about you?"
+                                    
+                                    Question 3: "Good afternoon. How have you been?"
+                                    Response 3: "Good afternoon. I've been well, thank you. And you?"
+                                    
+                                    Question 4: "Good evening. How's everything going?"
+                                    Response 4: "Good evening. Everything is going smoothly, thank you. How are you?"
+
+
+                                    - In case of anyother question, you should response back "sql". like
+                                    Example:
+
+                                    User: How many orders are there?
+                                    Bot: sql
+                                    User: total sales?
+                                    Bot: sql
+                                    etc...
+                      """}
+
+    # Assistant's message (initially empty)
+    assistant_message = {"role": "assistant", "content": ""}
+
+    messages = [system_message, {"role": "user", "content": question}, assistant_message]
+
+    # Use OpenAI's ChatCompletion API to generate an answer
+    
+    response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",  # You can choose a different model if needed
+        messages=messages,
+        temperature=0,
+    )
+
+    response = response.choices[0].message.content
+    # - Login time related details are available in Employee_Master table in FirstLoginDate, LastLoginDate columns.
+    # - Employee & client Target related info present in TargetMaster table. 
+    if 'sql' in response:
+        return False
+    
+    return response
 
 def execute_openai_code(response_text: str):
     """
@@ -124,6 +174,10 @@ def execute_openai_code(response_text: str):
 
 # Define a function for getting a response from the AI assistant
 def reponse_fun(query=''):
+    response = greeting_response(query)
+    if response:
+        return response
+
     agent = create_agent(filepath="sqlite:///ITSM_DB.db")
 
     # Query the agent.
