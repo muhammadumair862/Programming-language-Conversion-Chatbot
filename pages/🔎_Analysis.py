@@ -30,21 +30,10 @@ def write_response(response_dict: dict):
     # Check if the response is an answer.
     if "answer" in response_dict:
         st.write(response_dict["answer"])
-    
-    # Check if the response is a bar chart.
-    if "pie" in response_dict:
-        data = response_dict["bar"]
-
-        df = pd.DataFrame(data['data'], columns=data['columns'])
-        df.set_index(df.columns[0], inplace=True)
-        # df.set_index("columns", inplace=True)
-        st.pie_chart(df)
-        
 
     # Check if the response is a bar chart.
     if "bar" in response_dict:
         data = response_dict["bar"]
-        print(data)
 
         df = pd.DataFrame(data['data'], columns=data['columns'])
         df.set_index(df.columns[0], inplace=True)
@@ -68,20 +57,122 @@ def write_response(response_dict: dict):
 
 
 
-st.title("👨‍💻 Chat with your Database")
+# st.title("👨‍💻 Chat with your Database")
 
-query = st.text_area("Insert your query")
+# query = st.text_area("Insert your query")
 
-if st.button("Submit Query", type="primary"):
-    # Create an agent from the CSV file.
+# if st.button("Submit Query", type="primary"):
+#     # Create an agent from the CSV file.
+#     agent = create_agent(filepath="sqlite:///ITSM_DB.db")
+
+#     # Query the agent.
+#     response = get_response(agent=agent, input_text=query)
+
+#     # Decode the response.
+#     decoded_response = decode_response(response)
+
+#     # Write the response to the Streamlit app.
+#     write_response(decoded_response)
+
+
+
+
+
+
+import streamlit as st
+import re
+from PIL import Image
+from datetime import datetime
+import os
+
+
+# st.set_option('deprecation.showPyplotGlobalUse', False)
+html_string = """<style> 
+            .stButton{
+                position: fixed; 
+                margin-left:650px;
+                bottom: 120px; 
+                background-color: rgb(255, 255, 255);
+                z-index: 99
+                }
+            .stDeployButton{
+                visibility: hidden;
+            }
+            #MainMenu {visibility: hidden;}
+                </style>
+                """
+st.markdown(html_string, unsafe_allow_html=True)
+
+
+def is_valid_path(path):
+    return os.path.exists(path)
+
+
+def execute_openai_code(response_text: str):
+    """
+    Execute the code provided by OpenAI in the app.
+
+    Parameters:
+    - response_text: The response text from OpenAI
+    - query: The user's query
+    """
+
+    message_placeholder = st.empty()
+    message_placeholder.markdown(response_text)
+    st.session_state.messages.append({"role": "assistant", "content": response_text})
+
+
+# Define a function for getting a response from the AI assistant
+def reponse_fun(query=''):
     agent = create_agent(filepath="sqlite:///ITSM_DB.db")
 
     # Query the agent.
     response = get_response(agent=agent, input_text=query)
-    print(response)
+    
+    return response
 
-    # Decode the response.
-    decoded_response = decode_response(response)
 
-    # Write the response to the Streamlit app.
-    write_response(decoded_response)
+st.title('Chatbot')
+st.markdown(' ')
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        try:
+            if is_valid_path(message["content"]):
+                # It's a PIL image
+                image = Image.open(message["content"])   # mention the image directory
+                st.image(image, caption="Assistant's Image Response", use_column_width=True)
+            else:
+                st.markdown(message["content"])
+        
+        except:
+            st.markdown(message["content"])
+if len(st.session_state.messages) == 0:
+        # Add initial message
+        role = "assistant"
+        content = "How can I help you today?"
+        st.session_state.messages.append({"role": "assistant", "content": content})
+
+        with st.chat_message(role):
+            st.markdown(content)
+
+prompt = st.chat_input("What is up?")
+if prompt:
+# if prompt := st.chat_input("What is up?"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    with st.spinner("Generating response..."):  # Show loading spinner
+        full_response = reponse_fun(prompt)
+
+    # Hide the spinner and display the response
+    st.spinner()
+    with st.chat_message("assistant"):
+        execute_openai_code(full_response)
+
+        
+

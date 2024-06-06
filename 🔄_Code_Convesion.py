@@ -8,7 +8,7 @@ import environ
 env = environ.Env()
 environ.Env.read_env()
 
-st.set_page_config(layout="wide")
+
 os.environ["OPENAI_API_KEY"] = env("apikey")
 
 model = ChatOpenAI(model="gpt-3.5-turbo")
