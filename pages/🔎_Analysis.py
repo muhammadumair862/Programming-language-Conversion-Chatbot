@@ -33,7 +33,10 @@ def write_response(response_dict: dict):
 
     # Check if the response is an answer.
     if "answer" in response_dict:
-        st.write(response_dict["answer"])
+        with st.chat_message("assistant"):
+            st.markdown(response_dict["answer"])
+            st.session_state.messages.append({"role": "assistant", "content": response_dict["answer"]})
+
 
     # Check if the response is a bar chart.
     if "bar" in response_dict:
@@ -42,7 +45,26 @@ def write_response(response_dict: dict):
         df = pd.DataFrame(data['data'], columns=data['columns'])
         df.set_index(df.columns[0], inplace=True)
         # df.set_index("columns", inplace=True)
-        st.bar_chart(df)
+        # st.bar_chart(df)
+        # Plot the bar chart using matplotlib
+        plt.figure(figsize=(10, 6))
+        df.plot(kind='bar')
+        plt.title("Bar Chart")
+        plt.xlabel("X-axis Label")
+        plt.ylabel("Y-axis Label")
+
+        # Create a folder named "charts" if it doesn't exist
+        charts_folder = "charts"
+        os.makedirs(charts_folder, exist_ok=True)
+
+        # Append the datetime to the image name
+        current_datetime = datetime.now().strftime("%Y%m%d_%H%M%S")
+        plot_path = os.path.join(charts_folder, f"plot_{current_datetime}.png")
+        plt.savefig(plot_path)
+        st.pyplot(plt)
+
+        # Read the saved image in Streamlit and show it
+        st.session_state.messages.append({"role": "assistant", "content": plot_path})
 
     # Check if the response is a line chart.
     if "line" in response_dict:
@@ -50,13 +72,34 @@ def write_response(response_dict: dict):
         df = pd.DataFrame(data['data'], columns=data['columns'])
 
         df.set_index(df.columns[0], inplace=True)
-        st.line_chart(df)
+        # st.line_chart(df)
+        # Plot the line chart using matplotlib
+        plt.figure(figsize=(10, 6))
+        df.plot(kind='line')
+        plt.title("Line Chart")
+        plt.xlabel("X-axis Label")
+        plt.ylabel("Y-axis Label")
+
+        # Create a folder named "charts" if it doesn't exist
+        charts_folder = "charts"
+        os.makedirs(charts_folder, exist_ok=True)
+
+        # Append the datetime to the image name
+        current_datetime = datetime.now().strftime("%Y%m%d_%H%M%S")
+        plot_path = os.path.join(charts_folder, f"plot_{current_datetime}.png")
+        plt.savefig(plot_path)
+        st.pyplot(plt)
+
+        # Read the saved image in Streamlit and show it
+        st.session_state.messages.append({"role": "assistant", "content": plot_path})
 
     # Check if the response is a table.
     if "table" in response_dict:
         data = response_dict["table"]
         df = pd.DataFrame(data["data"], columns=data["columns"])
         st.table(df)
+        # Read the saved image in Streamlit and show it
+        st.session_state.messages.append({"role": "assistant", "content": df})
 
     # Check if the response is a pie chart.
     if "pie" in response_dict:
@@ -70,8 +113,18 @@ def write_response(response_dict: dict):
         fig, ax = plt.subplots()
         ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
         ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        # Create a folder named "charts" if it doesn't exist
+        charts_folder = "charts"
+        os.makedirs(charts_folder, exist_ok=True)
+
+        # Append the datetime to the image name
+        current_datetime = datetime.now().strftime("%Y%m%d_%H%M%S")
+        plot_path = os.path.join(charts_folder, f"plot_{current_datetime}.png")
+        fig.savefig(plot_path)
 
         st.pyplot(fig)
+        # Read the saved image in Streamlit and show it
+        st.session_state.messages.append({"role": "assistant", "content": plot_path})
 
 
 # st.title("👨‍💻 Chat with your Database")
@@ -192,6 +245,12 @@ def execute_openai_code(response_text: str):
 def reponse_fun(query=''):
     response = greeting_response(query)
     if response:
+        with st.chat_message("assistant"):
+            st.markdown(response)
+
+        # Read the saved image in Streamlit and show it
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        
         return response
 
     agent = create_agent(filepath="sqlite:///ITSM_DB.db")
@@ -245,10 +304,10 @@ if prompt:
     with st.spinner("Generating response..."):  # Show loading spinner
         full_response = reponse_fun(prompt)
 
-    # Hide the spinner and display the response
-    st.spinner()
-    with st.chat_message("assistant"):
-        execute_openai_code(full_response)
+    # # Hide the spinner and display the response
+    # st.spinner()
+    # with st.chat_message("assistant"):
+    #     execute_openai_code(full_response)
 
         
 
