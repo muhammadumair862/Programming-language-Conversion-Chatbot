@@ -3,6 +3,7 @@ from utils import create_agent, get_response
 import streamlit as st
 import pandas as pd
 import json
+import matplotlib.pyplot as plt
 
 
 def decode_response(response: str) -> dict:
@@ -14,8 +15,10 @@ def decode_response(response: str) -> dict:
     Returns:
         dict: dictionary with response data
     """
-    return json.loads(response)
-
+    try:
+        return json.loads(response)
+    except json.JSONDecodeError:
+        return {"answer": response}
 
 def write_response(response_dict: dict):
     """
@@ -45,7 +48,6 @@ def write_response(response_dict: dict):
     if "line" in response_dict:
         data = response_dict["line"]
         df = pd.DataFrame(data['data'], columns=data['columns'])
-        print(df)
 
         df.set_index(df.columns[0], inplace=True)
         st.line_chart(df)
@@ -56,6 +58,20 @@ def write_response(response_dict: dict):
         df = pd.DataFrame(data["data"], columns=data["columns"])
         st.table(df)
 
+    # Check if the response is a pie chart.
+    if "pie" in response_dict:
+        data = response_dict["pie"]
+        df = pd.DataFrame(data["data"], columns=data["columns"])
+        
+        # Assuming the first column is the label and the second column is the value
+        labels = df[df.columns[0]]
+        sizes = df[df.columns[1]]
+
+        fig, ax = plt.subplots()
+        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+        ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+        st.pyplot(fig)
 
 
 # st.title("👨‍💻 Chat with your Database")
@@ -182,6 +198,12 @@ def reponse_fun(query=''):
 
     # Query the agent.
     response = get_response(agent=agent, input_text=query)
+
+    # Decode the response.
+    decoded_response = decode_response(response)
+
+    # Write the response to the Streamlit app.
+    write_response(decoded_response)
     
     return response
 
